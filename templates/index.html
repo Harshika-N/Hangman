@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hangman Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+        }
+
+        .lives-container {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .lives-label {
+            font-size: 1.2em;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .lives {
+            font-size: 2em;
+            color: #e74c3c;
+            font-weight: bold;
+        }
+
+        .hangman-display {
+            text-align: center;
+            margin: 30px 0;
+            font-size: 2.5em;
+            font-family: monospace;
+            min-height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .word-display {
+            text-align: center;
+            font-size: 2em;
+            letter-spacing: 10px;
+            margin: 30px 0;
+            font-family: monospace;
+            color: #2c3e50;
+            font-weight: bold;
+        }
+
+        .message {
+            text-align: center;
+            font-size: 1.2em;
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 10px;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .message.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .message.info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .keyboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(40px, 1fr));
+            gap: 8px;
+            margin: 30px 0;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .key {
+            padding: 12px;
+            font-size: 1.1em;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            background-color: #3498db;
+            color: white;
+            transition: all 0.3s;
+            text-transform: uppercase;
+        }
+
+        .key:hover:not(:disabled) {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .key:disabled {
+            cursor: not-allowed;
+            opacity: 0.5;
+            transform: none;
+        }
+
+        .key.correct {
+            background-color: #27ae60;
+        }
+
+        .key.wrong {
+            background-color: #e74c3c;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            font-size: 1.1em;
+            font-weight: bold;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-primary {
+            background-color: #3498db;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.4);
+        }
+
+        .btn-secondary {
+            background-color: #95a5a6;
+            color: white;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background-color: #7f8c8d;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(149, 165, 166, 0.4);
+        }
+
+        .btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.5;
+            transform: none;
+        }
+
+        .guessed-letters {
+            text-align: center;
+            margin: 20px 0;
+            min-height: 30px;
+            font-size: 1.1em;
+            color: #666;
+        }
+
+        .guessed-letters span {
+            font-weight: bold;
+            color: #e74c3c;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 1.8em;
+            }
+
+            .word-display {
+                font-size: 1.5em;
+                letter-spacing: 5px;
+            }
+
+            .keyboard {
+                grid-template-columns: repeat(auto-fit, minmax(35px, 1fr));
+                gap: 5px;
+            }
+
+            .key {
+                padding: 10px;
+                font-size: 1em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Hangman</h1>
+
+        <div class="lives-container">
+            <div class="lives-label">Lives Remaining</div>
+            <div class="lives" id="lives">6</div>
+        </div>
+
+        <div class="hangman-display" id="hangman">
+            <pre>
+  +---+
+      |
+      |
+      |
+      |
+=========
+            </pre>
+        </div>
+
+        <div class="word-display" id="word-display">_ _ _ _ _ _</div>
+
+        <div class="guessed-letters">
+            Guessed letters: <span id="guessed">None</span>
+        </div>
+
+        <div class="message info" id="message">
+            New game started! Guess a letter to begin.
+        </div>
+
+        <div class="keyboard" id="keyboard"></div>
+
+        <div class="buttons">
+            <button class="btn btn-primary" id="new-game-btn">New Game</button>
+            <button class="btn btn-secondary" id="hint-btn">Get Hint</button>
+        </div>
+    </div>
+
+    <script>
+        const HANGMAN_STAGES = [
+            `
+  +---+
+      |
+      |
+      |
+      |
+=========`,
+            `
+  +---+
+  |   |
+      |
+      |
+      |
+=========`,
+            `
+  +---+
+  |   |
+  O   |
+      |
+      |
+=========`,
+            `
+  +---+
+  |   |
+  O   |
+  |   |
+      |
+=========`,
+            `
+  +---+
+  |   |
+  O   |
+ /|   |
+      |
+=========`,
+            `
+  +---+
+  |   |
+  O   |
+ /|\\  |
+      |
+=========`,
+            `
+  +---+
+  |   |
+  O   |
+ /|\\  |
+ /    |
+=========`,
+            `
+  +---+
+  |   |
+  O   |
+ /|\\  |
+ / \\  |
+=========`
+        ];
+
+        let gameState = {
+            word: '',
+            displayWord: '',
+            guessedLetters: [],
+            lives: 6,
+            gameOver: false,
+            won: false
+        };
+
+        function updateHangmanDisplay(lives) {
+            const hangman = document.getElementById('hangman');
+            hangman.innerHTML = `<pre>${HANGMAN_STAGES[6 - lives]}</pre>`;
+        }
+
+        function updateDisplay() {
+            document.getElementById('lives').textContent = gameState.lives;
+            document.getElementById('word-display').textContent = gameState.displayWord;
+            document.getElementById('guessed').textContent = gameState.guessedLetters.length > 0 ?
+                gameState.guessedLetters.join(', ') : 'None';
+
+            updateHangmanDisplay(gameState.lives);
+
+            const messageEl = document.getElementById('message');
+            if (gameState.gameOver) {
+                if (gameState.won) {
+                    messageEl.className = 'message success';
+                    messageEl.textContent = `🎉 You won! The word was ${gameState.word}`;
+                } else {
+                    messageEl.className = 'message error';
+                    messageEl.textContent = `💀 Game Over! The word was ${gameState.word}`;
+                }
+            }
+
+            document.getElementById('hint-btn').disabled = gameState.gameOver;
+        }
+
+        function createKeyboard() {
+            const keyboard = document.getElementById('keyboard');
+            keyboard.innerHTML = '';
+            for (let i = 97; i <= 122; i++) {
+                const letter = String.fromCharCode(i);
+                const btn = document.createElement('button');
+                btn.className = 'key';
+                btn.textContent = letter;
+                btn.dataset.letter = letter;
+                btn.addEventListener('click', () => makeGuess(letter));
+                keyboard.appendChild(btn);
+            }
+        }
+
+        function updateKeyboard() {
+            const keys = document.querySelectorAll('.key');
+            keys.forEach(key => {
+                const letter = key.dataset.letter;
+                if (gameState.guessedLetters.includes(letter)) {
+                    key.disabled = true;
+                    if (gameState.word.includes(letter)) {
+                        key.classList.add('correct');
+                    } else {
+                        key.classList.add('wrong');
+                    }
+                }
+            });
+        }
+
+        function showMessage(text, type = 'info') {
+            const messageEl = document.getElementById('message');
+            messageEl.className = `message ${type}`;
+            messageEl.textContent = text;
+        }
+
+        async function startNewGame() {
+            try {
+                const response = await fetch('/api/new-game', { method: 'POST' });
+                const data = await response.json();
+                gameState = {
+                    word: data.word,
+                    displayWord: data.display_word,
+                    guessedLetters: data.guessed_letters,
+                    lives: data.lives,
+                    gameOver: data.game_over,
+                    won: data.won
+                };
+                createKeyboard();
+                updateDisplay();
+                showMessage(data.message, 'info');
+            } catch (error) {
+                showMessage('Error starting new game', 'error');
+            }
+        }
+
+        async function makeGuess(letter) {
+            if (gameState.gameOver) return;
+
+            try {
+                const response = await fetch('/api/guess', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        word: gameState.word,
+                        guessed_letters: gameState.guessedLetters,
+                        lives: gameState.lives,
+                        letter: letter
+                    })
+                });
+                const data = await response.json();
+                gameState.displayWord = data.display_word;
+                gameState.guessedLetters = data.guessed_letters;
+                gameState.lives = data.lives;
+                gameState.gameOver = data.game_over;
+                gameState.won = data.won;
+                updateDisplay();
+                updateKeyboard();
+
+                const messageType = data.game_over ? (data.won ? 'success' : 'error') :
+                    (data.message.includes('Good job') ? 'success' : 'error');
+                showMessage(data.message, messageType);
+            } catch (error) {
+                showMessage('Error processing guess', 'error');
+            }
+        }
+
+        async function getHint() {
+            if (gameState.gameOver) return;
+
+            try {
+                const response = await fetch('/api/hint', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        word: gameState.word,
+                        guessed_letters: gameState.guessedLetters,
+                        lives: gameState.lives
+                    })
+                });
+                const data = await response.json();
+                gameState.displayWord = data.display_word;
+                gameState.guessedLetters = data.guessed_letters;
+                gameState.lives = data.lives;
+                gameState.gameOver = data.game_over;
+                gameState.won = data.won;
+                updateDisplay();
+                updateKeyboard();
+                showMessage(data.message, 'info');
+            } catch (error) {
+                showMessage('Error getting hint', 'error');
+            }
+        }
+
+        document.getElementById('new-game-btn').addEventListener('click', startNewGame);
+        document.getElementById('hint-btn').addEventListener('click', getHint);
+
+        startNewGame();
+    </script>
+</body>
+</html>
